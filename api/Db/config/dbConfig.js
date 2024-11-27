@@ -19,3 +19,6 @@ conn.connect((error)=>{
         
     }
 })
+
+
+module.exports = conn
