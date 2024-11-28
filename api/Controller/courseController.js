@@ -59,7 +59,7 @@ router.post("/create/", (req, res) => {
 });
 
 // Course_List
-router.post("/course-list", (req, res) => {
+router.get("/course-list", (req, res) => {
   try {
     var getAllCourse = `SELECT * FROM courses`;
     db.query(getAllCourse, (error, result) => {
@@ -98,11 +98,19 @@ router.post("/single-course", (req, res) => {
           error,
         });
       } else {
-        res.json({
-          success: true,
-          message: "Single Course Found",
-          result,
-        });
+        if (result.length==0) {
+          res.json({
+            success:false,
+            message:'Data Not Found'
+          })
+        } else {
+          res.json({
+            success: true,
+            message: "Single Course Found",
+            result,
+          });
+        }
+
       }
     });
   } catch (error) {
