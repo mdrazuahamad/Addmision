@@ -5,6 +5,7 @@ const cors= require("cors")
 
 const courseController = require("./Controller/courseController")
 const batchController = require("./Controller/batchController")
+const studentController = require("./Controller/studentController")
 
 
 
@@ -23,3 +24,4 @@ app.use(
 app.use(express.json());
 app.use("/course/", courseController)
 app.use("/batch", batchController)
+app.use("/student", studentController)
