@@ -1,27 +1,74 @@
-const {query} = require('express')
-const express = require('express')
+const { query } = require("express");
+const express = require("express");
 const jwt = require("jsonwebtoken");
-const router = express.Router()
-const db = require('../Db/config/dbConfig')
+const router = express.Router();
+const db = require("../Db/config/dbConfig");
 
+// router.post("/create/", (req, res) => {
+//   function validateEmail(email) {
+//     // Regular expression for basic email validation
+//     const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+//     return regex.test(email);
+//   }
 
-// Create new User
+//   let tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
+//   let jwtSecretKey = process.env.JWT_SECRET_KEY;
+//   try {
+//     const userEmail = req.body.email;
+//     const validEmail = validateEmail(userEmail);
+//     const token = req.header(tokenHeaderKey);
+//     const verified = jwt.verify(token, jwtSecretKey);
+//     const userid = Math.floor(100000 * Math.random() + 999999);
+//     if (validEmail) {
+//     } else {
+//       res.json({
+//         success: false,
+//         message: "Email Not Valid, please insert valid email",
+//       });
+//     }
+//     if (verified) {
+//       console.log("verified");
+//       res.json({
+//         success: true,
+//         message: "Verified",
+//       });
+//     } else {
+//       res.json({
+//         success: false,
+//         message: "No Verified",
+//       });
+//     }
+//   } catch (error) {
+//     res.json({
+//       success: false,
+//       message: "Something Went Wrong",
+//     });
+//   }
+// });
+
+// // Create new User
 router.post("/create/", (req, res) => {
-    try {
-      const userid = Math.floor(1000000 * Math.random() + 9999999);
-      const userName = req.body.userName;
-      const userEmail = req.body.userEmail;
-      const userMobile = req.body.userMobile;
-      const userPassword = req.body.userPassword;
-  
-      // check existing user
-      var checkExisting = `SELECT * FROM users WHERE user_email='${userEmail}'`;
+  function validateEmail(email) {
+    // Regular expression for basic email validation
+    const regex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+    return regex.test(email);
+  }
+  try {
+    const userid = Math.floor(1000000 * Math.random() + 9999999);
+    const userName = req.body.userName;
+    const userEmail = req.body.userEmail;
+    const userMobile = req.body.userMobile;
+    const userPassword = req.body.userPassword;
+    const validEmail = validateEmail(userEmail);
+    // check existing user
+    var checkExisting = `SELECT * FROM users WHERE user_email='${userEmail}'`;
+    if (validEmail) {
       db.query(checkExisting, (error, results) => {
         if (error) {
           res.json({
             success: false,
             error,
-            message:'Data Not Found'
+            message: "Data Not Found",
           });
         } else {
           if (results.length == 0) {
@@ -34,14 +81,14 @@ router.post("/create/", (req, res) => {
                 res.json({
                   success: false,
                   error,
-                  message:'Data Not Found'
+                  message: "Data Not Found",
                 });
-              } else{
+              } else {
                 res.json({
-                    success: true,
-                    message: "User Registered Successfully",
-                    results
-                  });
+                  success: true,
+                  message: "User Registered Successfully",
+                  results,
+                });
               }
             });
           } else {
@@ -52,70 +99,34 @@ router.post("/create/", (req, res) => {
           }
         }
       });
-    } catch (error) {
+    } else {
       res.json({
         success: false,
-        error,
+        message: "Invalid Email, Please provide correction email address",
       });
     }
-  });
+  } catch (error) {
+    res.json({
+      success: false,
+      error,
+    });
+  }
+});
 
 //Check Auth
 router.post("/auth/", (req, res) => {
-    try {
-      let tokenHeader = process.env.TOKEN_HEADER_KEY;
-      let tokenSecrete = process.env.JWT_SECRET_KEY;
-  
-      // validate the token
-      const token = req.header(tokenHeader);
-      const verified = jwt.verify(token, tokenSecrete);
-  
-      if (verified) {
-        const userid = verified.user_id;
-        var checkExisting = `SELECT * FROM users WHERE 	user_id='${userid}'`;
-        db.query(checkExisting, (error, results) => {
-          if (error) {
-            res.json({
-              success: false,
-              error,
-            });
-          } else {
-            if (results.length != 0) {
-              res.json({
-                success: true,
-                user: results,
-                message: "InSession",
-              });
-            } else {
-              res.status(404).json({
-                success: false,
-                message: "User Not Found!, try again!",
-              });
-            }
-          }
-        });
-      } else {
-        res.json({
-          success: false,
-          message: "OutSession",
-        });
-      }
-    } catch (error) {
-      res.json({
-        success: false,
-        error,
-      });
-    }
-  });
+  try {
+    let tokenHeader = process.env.TOKEN_HEADER_KEY;
+    let tokenSecrete = process.env.JWT_SECRET_KEY;
 
-// User Login
-  router.post("/login/", (req, res) => {
-    try {
-      const username = req.body.username;
-      const password = req.body.password;
-  
-      var checkUserInDb = `SELECT * FROM users WHERE user_email='${username}'`;
-      db.query(checkUserInDb, (error, results) => {
+    // validate the token
+    const token = req.header(tokenHeader);
+    const verified = jwt.verify(token, tokenSecrete);
+
+    if (verified) {
+      const userid = verified.user_id;
+      var checkExisting = `SELECT * FROM users WHERE 	user_id='${userid}'`;
+      db.query(checkExisting, (error, results) => {
         if (error) {
           res.json({
             success: false,
@@ -123,43 +134,85 @@ router.post("/auth/", (req, res) => {
           });
         } else {
           if (results.length != 0) {
-            const dbPassword = results[0].user_password;
-            const userId = results[0].user_id;
-            if (dbPassword == password) {
-              let jwtSecretKey = process.env.JWT_SECRET_KEY;
-              let sessionData = {
-                time: Date(),
-                username: username,
-                user_id: userId,
-              };
-              const token = jwt.sign(sessionData, jwtSecretKey, {
-                expiresIn: process.env.JWT_TOKEN_EXPIRES,
-              });
-              res.json({
-                success: true,
-                message: "Login Success",
-                token: token,
-              });
-            } else {
-              res.json({
-                success: false,
-                message: "Wrong password!, try again!",
-              });
-            }
-          } else {
             res.json({
+              success: true,
+              user: results,
+              message: "InSession",
+            });
+          } else {
+            res.status(404).json({
               success: false,
-              message: "User Not Registred!, try again!",
+              message: "User Not Found!, try again!",
             });
           }
         }
       });
-    } catch (error) {
+    } else {
       res.json({
         success: false,
-        error,
+        message: "OutSession",
       });
     }
-  });
+  } catch (error) {
+    res.json({
+      success: false,
+      error,
+    });
+  }
+});
 
-module.exports= router
+// User Login
+router.post("/login/", (req, res) => {
+  try {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    var checkUserInDb = `SELECT * FROM users WHERE user_email='${username}'`;
+    db.query(checkUserInDb, (error, results) => {
+      if (error) {
+        res.json({
+          success: false,
+          error,
+        });
+      } else {
+        if (results.length != 0) {
+          const dbPassword = results[0].user_password;
+          const userId = results[0].user_id;
+          if (dbPassword == password) {
+            let jwtSecretKey = process.env.JWT_SECRET_KEY;
+            let sessionData = {
+              time: Date(),
+              username: username,
+              user_id: userId,
+            };
+            const token = jwt.sign(sessionData, jwtSecretKey, {
+              expiresIn: process.env.JWT_TOKEN_EXPIRES,
+            });
+            res.json({
+              success: true,
+              message: "Login Success",
+              token: token,
+            });
+          } else {
+            res.json({
+              success: false,
+              message: "Wrong password!, try again!",
+            });
+          }
+        } else {
+          res.json({
+            success: false,
+            message: "User Not Registred!, try again!",
+          });
+        }
+      }
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      error,
+    });
+  }
+});
+
+module.exports = router;
